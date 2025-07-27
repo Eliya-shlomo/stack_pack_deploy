@@ -1,10 +1,22 @@
-import { arcjet } from '@arcjet/express';
+import arcjet, { shield, detectBot, tokenBucket } from "@arcjet/node";
+import { ARCJET_KEY } from './env.js'
 
-export default arcjet({
-  apiKey: process.env.ARCJET_API_KEY,
-  rateLimit: {
-    max: 100, 
-    windowMs: 60 * 1000,
-  },
-  ddos: true,
+const aj = arcjet({
+  key: ARCJET_KEY,
+  characteristics: ["ip.src"],
+  rules: [
+    shield({ mode: "LIVE" }),
+    detectBot({
+      mode: "LIVE",
+      allow: [ "CATEGORY:SEARCH_ENGINE" ],
+    }),
+    tokenBucket({
+      mode: "LIVE",
+      refillRate: 5, // Refill 5 tokens per interval
+      interval: 10, // Refill every 10 seconds
+      capacity: 10, // Bucket capacity of 10 tokens
+    }),
+  ],
 });
+
+export default aj;
